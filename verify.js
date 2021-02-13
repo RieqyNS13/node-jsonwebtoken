@@ -111,9 +111,9 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
     }
 
     if (!options.algorithms) {
-      options.algorithms = secretOrPublicKey.toString().includes('BEGIN CERTIFICATE') ||
-        secretOrPublicKey.toString().includes('BEGIN PUBLIC KEY') ? PUB_KEY_ALGS :
-        secretOrPublicKey.toString().includes('BEGIN RSA PUBLIC KEY') ? RSA_KEY_ALGS : HS_ALGS;
+      options.algorithms = ~secretOrPublicKey.toString().indexOf('BEGIN CERTIFICATE') ||
+        ~secretOrPublicKey.toString().indexOf('BEGIN PUBLIC KEY') ? PUB_KEY_ALGS :
+        ~secretOrPublicKey.toString().indexOf('BEGIN RSA PUBLIC KEY') ? RSA_KEY_ALGS : HS_ALGS;
 
     }
 
@@ -134,14 +134,17 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
     }
 
     var payload = decodedToken.payload;
+	if(payload.nbf) payload.nbf = parseInt(payload.nbf);
+	if(payload.exp) payload.exp = parseInt(payload.exp);
+
 
     if (typeof payload.nbf !== 'undefined' && !options.ignoreNotBefore) {
       if (typeof payload.nbf !== 'number') {
         return done(new JsonWebTokenError('invalid nbf value'));
       }
-      if (payload.nbf > clockTimestamp + (options.clockTolerance || 0)) {
-        return done(new NotBeforeError('jwt not active', new Date(payload.nbf * 1000)));
-      }
+      //if (payload.nbf > clockTimestamp + (options.clockTolerance || 0)) {
+       // return done(new NotBeforeError('jwt not active', new Date(payload.nbf * 1000)));
+     // }
     }
 
     if (typeof payload.exp !== 'undefined' && !options.ignoreExpiration) {
